@@ -6,15 +6,15 @@ export type Theme = 'light' | 'dark';
 
 interface CanvasStore {
   viewState: ViewState;
-  selectedTaskId: string | null;
+  selectedNodeId: string | null;
   isAIProcessing: boolean;
-  draggingTaskId: string | null;
+  draggingNodeId: string | null;
   isPanning: boolean;
   theme: Theme;
   setViewState: (viewState: ViewState | ((prev: ViewState) => ViewState)) => void;
-  setSelectedTaskId: (id: string | null) => void;
+  setSelectedNodeId: (id: string | null) => void;
   setIsAIProcessing: (is: boolean) => void;
-  setDraggingTaskId: (id: string | null) => void;
+  setDraggingNodeId: (id: string | null) => void;
   setIsPanning: (is: boolean) => void;
   setTheme: (theme: Theme) => void;
 }
@@ -24,17 +24,17 @@ export const useCanvasStore = create<CanvasStore>((set) => ({
     offset: { x: 0, y: 0 },
     scale: 1.0
   },
-  selectedTaskId: null,
+  selectedNodeId: null,
   isAIProcessing: false,
-  draggingTaskId: null,
+  draggingNodeId: null,
   isPanning: false,
   theme: (localStorage.getItem('infinite-theme') as Theme) || 'light',
   setViewState: (update) => set((state) => ({
     viewState: typeof update === 'function' ? update(state.viewState) : update
   })),
-  setSelectedTaskId: (id) => set({ selectedTaskId: id }),
+  setSelectedNodeId: (id) => set({ selectedNodeId: id }),
   setIsAIProcessing: (is) => set({ isAIProcessing: is }),
-  setDraggingTaskId: (id) => set({ draggingTaskId: id }),
+  setDraggingNodeId: (id) => set({ draggingNodeId: id }),
   setIsPanning: (is) => set({ isPanning: is }),
   setTheme: (theme) => {
     localStorage.setItem('infinite-theme', theme);

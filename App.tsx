@@ -2,7 +2,7 @@
 import React, { useEffect, useRef } from 'react';
 import { PresenterProvider } from './context/PresenterContext';
 import { usePresenter } from './hooks/usePresenter';
-import { useTaskStore } from './stores/useTaskStore';
+import { useNodeStore } from './stores/useTaskStore';
 import { useCanvasStore } from './stores/useCanvasStore';
 import { TaskNode } from './components/TaskNode';
 import { Toolbar } from './components/Toolbar';
@@ -39,12 +39,12 @@ function Grid() {
 
 function Canvas() {
   const presenter = usePresenter();
-  const tasks = useTaskStore(state => state.tasks);
-  const setTasks = useTaskStore(state => state.setTasks);
+  const nodes = useNodeStore(state => state.nodes);
+  const setNodes = useNodeStore(state => state.setNodes);
   const viewState = useCanvasStore(state => state.viewState);
   const theme = useCanvasStore(state => state.theme);
   const isAIProcessing = useCanvasStore(state => state.isAIProcessing);
-  const draggingTaskId = useCanvasStore(state => state.draggingTaskId);
+  const draggingNodeId = useCanvasStore(state => state.draggingNodeId);
   const isPanning = useCanvasStore(state => state.isPanning);
   const setViewState = useCanvasStore(state => state.setViewState);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -52,7 +52,7 @@ function Canvas() {
   const isDark = theme === 'dark';
 
   useEffect(() => {
-    const savedTasks = presenter.initFromStorage();
+    const saved = presenter.initFromStorage();
     const centerX = window.innerWidth / 2 - 160;
     const centerY = window.innerHeight / 2 - 90;
     
@@ -61,14 +61,13 @@ function Canvas() {
       offset: { x: centerX, y: centerY }
     }));
 
-    if (savedTasks && savedTasks.length > 0) {
-      setTasks(savedTasks);
+    if (saved && saved.length > 0) {
+      setNodes(saved);
     } else {
-      setTasks([{
+      setNodes([{
         id: '1',
-        title: 'Welcome to Aether',
-        description: 'A boundless space for your mind.\n\n• Double-click to create\n• Use ✦ to expand ideas with AI\n• Scroll to zoom, space to pan\n\nPerfect for system design, knowledge mapping, and creative flow.',
-        completed: false,
+        title: 'The Aether Canvas',
+        description: 'Think without borders. Explore without limits.\n\n• Double-click anywhere to create a new fragment\n• Use the ✦ icon to expand a seed into branches\n• Space + Drag to move the world\n• Command/Ctrl + Scroll to navigate depth',
         isCollapsed: false,
         position: { x: 0, y: 0 },
         color: 'blue',
@@ -76,13 +75,13 @@ function Canvas() {
         height: 180,
       }]);
     }
-  }, [presenter, setTasks, setViewState]);
+  }, [presenter, setNodes, setViewState]);
 
   useEffect(() => {
-    if (tasks.length > 0) {
-      presenter.saveToStorage(tasks);
+    if (nodes.length > 0) {
+      presenter.saveToStorage(nodes);
     }
-  }, [tasks, presenter]);
+  }, [nodes, presenter]);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     presenter.canvasManager.updatePanning(e);
@@ -96,7 +95,7 @@ function Canvas() {
 
   return (
     <div 
-      className={`canvas-container select-none ${isDark ? 'dark' : ''} ${draggingTaskId || isPanning ? 'dragging-active' : ''}`} 
+      className={`canvas-container select-none ${isDark ? 'dark' : ''} ${draggingNodeId || isPanning ? 'dragging-active' : ''}`} 
       onMouseMove={handleMouseMove} 
       onMouseUp={handleMouseUp} 
       onMouseLeave={handleMouseUp}
@@ -112,21 +111,21 @@ function Canvas() {
            if (e.target === containerRef.current) {
              const x = (e.clientX - viewState.offset.x) / viewState.scale;
              const y = (e.clientY - viewState.offset.y) / viewState.scale;
-             presenter.taskManager.addTask({ x, y });
+             presenter.taskManager.addNode({ x, y });
            }
         }}
       />
 
       <div 
-        className={`world-space absolute ${draggingTaskId || isPanning ? 'no-transition' : ''}`} 
+        className={`world-space absolute ${draggingNodeId || isPanning ? 'no-transition' : ''}`} 
         style={{ 
           transform: `translate3d(${viewState.offset.x}px, ${viewState.offset.y}px, 0) scale(${viewState.scale})`, 
           transformOrigin: '0 0' 
         }}
       >
-        {tasks.map(task => (
-          <div key={task.id} className="pointer-events-auto absolute">
-            <TaskNode task={task} />
+        {nodes.map(node => (
+          <div key={node.id} className="pointer-events-auto absolute">
+            <TaskNode task={node} />
           </div>
         ))}
       </div>
@@ -137,7 +136,7 @@ function Canvas() {
         </div>
         <div className={`w-px h-3 ${isDark ? 'bg-white/20' : 'bg-slate-300'}`} />
         <div className={`text-[11px] font-medium tracking-widest uppercase opacity-40 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-          Infinite Workspace
+          Infinite Synthesis
         </div>
       </div>
 

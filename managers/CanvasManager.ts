@@ -27,9 +27,10 @@ export class CanvasManager {
   };
 
   startPanning = (e: React.MouseEvent) => {
-    const { viewState, setIsPanning, setSelectedTaskId } = useCanvasStore.getState();
+    // Fixed: setSelectedTaskId was called instead of setSelectedNodeId
+    const { viewState, setIsPanning, setSelectedNodeId } = useCanvasStore.getState();
     setIsPanning(true);
-    setSelectedTaskId(null);
+    setSelectedNodeId(null);
     this.panStartAnchor = { 
       x: e.clientX - viewState.offset.x, 
       y: e.clientY - viewState.offset.y 

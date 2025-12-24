@@ -1,16 +1,18 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
 
-const API_KEY = process.env.API_KEY || "";
+// Removed local API_KEY variable to follow guidelines for process.env.API_KEY usage
 
-export const breakdownTask = async (taskTitle: string, taskDescription: string) => {
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+export const expandIdea = async (title: string, description: string) => {
+  // Always use a named parameter and access process.env.API_KEY directly
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
-  const prompt = `Break down the following task into 3-5 manageable sub-tasks for a visual planner:
-  Task: ${taskTitle}
-  Description: ${taskDescription}
+  const prompt = `Act as a creative synthesizer. Expand on the following concept into 3-4 deeply related branches or exploratory paths for a visual thinking space:
+  Concept: ${title}
+  Context: ${description}
   
-  Respond with a JSON array of sub-tasks, each with a 'title' and 'description'.`;
+  Each branch should offer a new perspective or a concrete next step for exploration.
+  Respond with a JSON array of objects, each with a 'title' and 'description'.`;
 
   try {
     const response = await ai.models.generateContent({
@@ -32,9 +34,10 @@ export const breakdownTask = async (taskTitle: string, taskDescription: string) 
       },
     });
 
-    return JSON.parse(response.text);
+    // response.text is a property, not a method. Using it with a fallback.
+    return JSON.parse(response.text || "[]");
   } catch (error) {
-    console.error("AI breakdown failed:", error);
+    console.error("AI synthesis failed:", error);
     throw error;
   }
 };

@@ -1,15 +1,16 @@
 
-import { useTaskStore } from '../stores/useTaskStore';
+import { useNodeStore } from '../stores/useTaskStore';
 import { useCanvasStore } from '../stores/useCanvasStore';
-import { Task, Position } from '../types';
-import { breakdownTask as breakdownTaskAI } from '../services/geminiService';
+import { IdeaNode, Position } from '../types';
+import { expandIdea as expandIdeaAI } from '../services/geminiService';
 
+// Renamed NodeManager to TaskManager to fix import error in Presenter.ts
 export class TaskManager {
   private dragAnchor: { mouse: Position; task: Position } | null = null;
 
-  addTask = (position?: Position) => {
-    const { tasks, setTasks } = useTaskStore.getState();
-    const { viewState, setSelectedTaskId } = useCanvasStore.getState();
+  addNode = (position?: Position) => {
+    const { nodes, setNodes } = useNodeStore.getState();
+    const { viewState, setSelectedNodeId } = useCanvasStore.getState();
     
     const newId = Math.random().toString(36).substr(2, 9);
     const centerPos = position || {
@@ -17,93 +18,90 @@ export class TaskManager {
       y: (window.innerHeight / 2 - viewState.offset.y) / viewState.scale
     };
     
-    const newTask: Task = {
+    const newNode: IdeaNode = {
       id: newId,
       title: 'New Idea',
       description: '',
-      completed: false,
       isCollapsed: false,
       position: centerPos,
-      color: ['blue', 'green', 'purple', 'amber'][Math.floor(Math.random() * 4)],
+      color: ['blue', 'purple', 'emerald', 'rose'][Math.floor(Math.random() * 4)],
       width: 320,
       height: 180,
     };
     
-    setTasks([...tasks, newTask]);
-    setSelectedTaskId(newId);
+    setNodes([...nodes, newNode]);
+    setSelectedNodeId(newId);
   };
 
-  updateTask = (id: string, updates: Partial<Task>) => {
-    const { tasks, setTasks } = useTaskStore.getState();
-    setTasks(tasks.map(t => t.id === id ? { ...t, ...updates } : t));
+  updateNode = (id: string, updates: Partial<IdeaNode>) => {
+    const { nodes, setNodes } = useNodeStore.getState();
+    setNodes(nodes.map(n => n.id === id ? { ...n, ...updates } : n));
   };
 
-  deleteTask = (id: string) => {
-    const { tasks, setTasks } = useTaskStore.getState();
-    const { selectedTaskId, setSelectedTaskId } = useCanvasStore.getState();
-    setTasks(tasks.filter(t => t.id !== id));
-    if (selectedTaskId === id) setSelectedTaskId(null);
+  deleteNode = (id: string) => {
+    const { nodes, setNodes } = useNodeStore.getState();
+    const { selectedNodeId, setSelectedNodeId } = useCanvasStore.getState();
+    setNodes(nodes.filter(n => n.id !== id));
+    if (selectedNodeId === id) setSelectedNodeId(null);
   };
 
   startDragging = (id: string, e: React.MouseEvent) => {
-    const { tasks } = useTaskStore.getState();
-    const { setDraggingTaskId, setSelectedTaskId } = useCanvasStore.getState();
-    const task = tasks.find(t => t.id === id);
-    if (task) {
-      setDraggingTaskId(id);
-      setSelectedTaskId(id);
+    const { nodes } = useNodeStore.getState();
+    const { setDraggingNodeId, setSelectedNodeId } = useCanvasStore.getState();
+    const node = nodes.find(n => n.id === id);
+    if (node) {
+      setDraggingNodeId(id);
+      setSelectedNodeId(id);
       this.dragAnchor = {
         mouse: { x: e.clientX, y: e.clientY },
-        task: { ...task.position }
+        task: { ...node.position }
       };
     }
   };
 
   updateDragging = (e: React.MouseEvent) => {
-    const { draggingTaskId, viewState } = useCanvasStore.getState();
-    if (!draggingTaskId || !this.dragAnchor) return;
+    const { draggingNodeId, viewState } = useCanvasStore.getState();
+    if (!draggingNodeId || !this.dragAnchor) return;
 
     const dx = (e.clientX - this.dragAnchor.mouse.x) / viewState.scale;
     const dy = (e.clientY - this.dragAnchor.mouse.y) / viewState.scale;
     
-    this.updateTask(draggingTaskId, {
+    this.updateNode(draggingNodeId, {
       position: { x: this.dragAnchor.task.x + dx, y: this.dragAnchor.task.y + dy }
     });
   };
 
   stopDragging = () => {
-    useCanvasStore.getState().setDraggingTaskId(null);
+    useCanvasStore.getState().setDraggingNodeId(null);
     this.dragAnchor = null;
   };
 
-  handleAIByBreakdown = async (id: string) => {
-    const { tasks, setTasks } = useTaskStore.getState();
+  handleAIExpansion = async (id: string) => {
+    const { nodes, setNodes } = useNodeStore.getState();
     const { setIsAIProcessing } = useCanvasStore.getState();
-    const task = tasks.find(t => t.id === id);
-    if (!task) return;
+    const node = nodes.find(n => n.id === id);
+    if (!node) return;
 
     setIsAIProcessing(true);
     try {
-      // 现在的 AI 逻辑是“思维扩展”
-      const subtasks = await breakdownTaskAI(task.title, task.description);
-      const newTasks: Task[] = subtasks.map((st: any, index: number) => ({
+      const branches = await expandIdeaAI(node.title, node.description);
+      const newNodes: IdeaNode[] = branches.map((st: any, index: number) => ({
         id: Math.random().toString(36).substr(2, 9),
         title: st.title,
         description: st.description,
-        completed: false,
         isCollapsed: false,
         position: {
-          x: task.position.x + 400,
-          y: task.position.y + (index - Math.floor(subtasks.length/2)) * 220
+          x: node.position.x + 400,
+          y: node.position.y + (index - Math.floor(branches.length/2)) * 220
         },
-        color: task.color,
+        color: node.color,
         width: 320,
         height: 180,
-        parentId: task.id
+        parentId: node.id
       }));
-      setTasks([...tasks, ...newTasks]);
+      setNodes([...nodes, ...newNodes]);
     } catch (err) {
-      alert("AI synthesis failed. Check API key.");
+      console.error(err);
     } finally {
       setIsAIProcessing(false);
     }

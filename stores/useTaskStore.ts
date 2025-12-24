@@ -1,13 +1,13 @@
 
 import { create } from 'zustand';
-import { Task } from '../types';
+import { IdeaNode } from '../types';
 
-interface TaskStore {
-  tasks: Task[];
-  setTasks: (tasks: Task[]) => void;
+interface NodeStore {
+  nodes: IdeaNode[];
+  setNodes: (nodes: IdeaNode[]) => void;
 }
 
-export const useTaskStore = create<TaskStore>((set) => ({
-  tasks: [],
-  setTasks: (tasks) => set({ tasks }),
+export const useNodeStore = create<NodeStore>((set) => ({
+  nodes: [],
+  setNodes: (nodes) => set({ nodes }),
 }));

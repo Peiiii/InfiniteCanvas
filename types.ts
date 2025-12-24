@@ -4,11 +4,10 @@ export interface Position {
   y: number;
 }
 
-export interface Task {
+export interface IdeaNode {
   id: string;
   title: string;
   description: string;
-  completed: boolean;
   position: Position;
   color: string;
   width: number;
@@ -23,7 +22,7 @@ export interface ViewState {
 }
 
 export interface CanvasState {
-  tasks: Task[];
+  nodes: IdeaNode[];
   viewState: ViewState;
-  selectedTaskId: string | null;
+  selectedNodeId: string | null;
 }
